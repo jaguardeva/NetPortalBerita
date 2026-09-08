@@ -11,7 +11,7 @@ Project ini dibangun menggunakan ASP.NET Core Web API dengan ASP.NET Core Identi
 * Entity Framework Core
 * ASP.NET Core Identity
 * JWT Authentication
-* SQL Server
+* PostgreSQL
 * Swagger / OpenAPI
 
 ## Features
@@ -39,13 +39,13 @@ Project ini dibangun menggunakan ASP.NET Core Web API dengan ASP.NET Core Identi
 Pastikan sudah terinstall:
 
 * [.NET SDK](https://dotnet.microsoft.com/download)
-* SQL Server
+* PostgreSQL
 * Git
 
 ### Clone Repository
 
 ```bash
-git clone https://github.com/<username>/news-portal-api.git
+git clone https://github.com/jaguardeva/NetPortalBerita.git
 cd news-portal-api
 ```
 
@@ -67,7 +67,7 @@ Contoh:
 }
 ```
 
-Sesuaikan connection string dengan konfigurasi SQL Server di komputer Anda.
+Sesuaikan connection string dengan konfigurasi PostgreSQL di komputer Anda.
 
 ### Install Dependencies
 
@@ -125,7 +125,7 @@ Bearer <access-token>
 
 ## Database
 
-Project menggunakan SQL Server dan Entity Framework Core Code First.
+Project menggunakan PostgreSQL dan Entity Framework Core Code First.
 
 User management menggunakan ASP.NET Core Identity dengan `Guid` sebagai User ID.
 
