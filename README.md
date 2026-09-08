@@ -1,133 +1,118 @@
-# News Portal API
+# News Portal
 
-Backend API untuk aplikasi **News Portal** yang menyediakan fitur autentikasi, artikel, komentar, dan like.
+Website portal berita berbasis **ASP.NET Core MVC** yang memungkinkan pengguna membaca artikel, memberikan like, dan memberikan komentar.
 
-Project ini dibangun menggunakan ASP.NET Core Web API dengan ASP.NET Core Identity untuk authentication dan user management.
+Terdapat tiga role utama:
+
+* **User** — membaca artikel, like, dan komentar
+* **Author** — membuat dan mengelola artikel miliknya
+* **Admin** — mengelola artikel, kategori, user, dan role
 
 ## Tech Stack
 
-* .NET 10
-* ASP.NET Core Web API
-* Entity Framework Core
+* ASP.NET Core MVC / .NET
 * ASP.NET Core Identity
-* JWT Authentication
+* Entity Framework Core
 * PostgreSQL
-* Swagger / OpenAPI
+* Bootstrap 5
+* Razor Views
 
-## Features
-
-* User registration & login
-* JWT authentication
-* Role-based authorization
-* Article management
-* Article comments
-* Article likes
-* User & role management
-
-### Roles
-
-| Role   | Access                            |
-| ------ | --------------------------------- |
-| User   | Read article, like, comment       |
-| Author | Create, edit, delete own article  |
-| Admin  | Manage articles, users, and roles |
-
-## Getting Started
-
-### Requirements
+## Requirements
 
 Pastikan sudah terinstall:
 
 * [.NET SDK](https://dotnet.microsoft.com/download)
-* PostgreSQL
+* [PostgreSQL](https://www.postgresql.org/download/)
 * Git
 
-### Clone Repository
+## Setup
+
+### 1. Clone Repository
 
 ```bash
-git clone https://github.com/jaguardeva/NetPortalBerita.git
-cd news-portal-api
+git clone https://github.com/jaguardeva/news-portal.git
+cd news-portal
 ```
 
-### Configure Database
+### 2. Configure User Secrets
 
-Buat atau ubah connection string pada:
+Project menggunakan **.NET User Secrets** untuk menyimpan credential development seperti connection string dan authentication secret.
 
-```text
-src/NewsPortal.Api/appsettings.Development.json
+Jalankan dari folder project:
+
+```bash
+dotnet user-secrets init
 ```
 
-Contoh:
+Kemudian tambahkan connection string PostgreSQL:
 
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost;Database=NewsPortalDb;Trusted_Connection=True;TrustServerCertificate=True"
-  }
-}
+```bash
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=NewsPortal;Username=YOUR_USERNAME;Password=YOUR_PASSWORD"
 ```
 
-Sesuaikan connection string dengan konfigurasi PostgreSQL di komputer Anda.
+> Secret tidak perlu disimpan di `appsettings.json` atau di-upload ke GitHub.
 
-### Install Dependencies
+### 3. Restore Dependencies
 
 ```bash
 dotnet restore
 ```
 
-### Create Database
-
-Jalankan Entity Framework Core migration:
+### 4. Update Database
 
 ```bash
 dotnet ef database update
 ```
 
-Jika `dotnet ef` belum tersedia:
+Jika Entity Framework CLI belum tersedia:
 
 ```bash
 dotnet tool install --global dotnet-ef
 ```
 
-### Run Project
+Kemudian jalankan kembali:
 
 ```bash
-dotnet run --project src/NewsPortal.Api
+dotnet ef database update
 ```
 
-Setelah aplikasi berjalan, buka Swagger pada URL yang ditampilkan oleh terminal, biasanya:
+### 5. Run Application
 
-```text
-https://localhost:<port>/swagger
+```bash
+dotnet run
 ```
 
-Swagger dapat digunakan untuk mencoba endpoint API secara langsung.
+Atau jalankan melalui Visual Studio / Rider.
 
-## Project Structure
+Setelah aplikasi berjalan, buka URL yang ditampilkan pada terminal.
+
+## Development Configuration
+
+Konfigurasi umum aplikasi berada di:
 
 ```text
-src/
-├── NewsPortal.Api
-├── NewsPortal.Application
-├── NewsPortal.Domain
-└── NewsPortal.Infrastructure
+appsettings.json
 ```
 
-## Authentication
-
-API menggunakan JWT Authentication.
-
-Setelah login, gunakan access token pada Swagger melalui tombol **Authorize**:
+Konfigurasi khusus development dapat menggunakan:
 
 ```text
-Bearer <access-token>
+appsettings.Development.json
+```
+
+Jangan menyimpan password, connection string yang mengandung credential, API key, atau secret lainnya di dalam repository.
+
+Untuk credential lokal gunakan:
+
+```bash
+dotnet user-secrets list
 ```
 
 ## Database
 
-Project menggunakan PostgreSQL dan Entity Framework Core Code First.
+Database menggunakan **PostgreSQL** dan dikelola dengan **Entity Framework Core Code First**.
 
-User management menggunakan ASP.NET Core Identity dengan `Guid` sebagai User ID.
+Authentication dan user management menggunakan **ASP.NET Core Identity** dengan `Guid` sebagai User ID.
 
 ## License
 
