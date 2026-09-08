@@ -1,0 +1,169 @@
+@model ArticleEditViewModel
+@{
+    ViewData["Title"] = "Edit Artikel";
+}
+
+@section Styles {
+    <!-- Summernote Lite/BS5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs5.min.css" rel="stylesheet">
+    <style>
+        .note-editor.note-frame {
+            border-color: var(--color-border);
+            border-radius: 6px;
+        }
+        .note-toolbar {
+            background-color: var(--color-surface);
+            border-bottom-color: var(--color-border);
+        }
+    </style>
+}
+
+<div class="py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1 fw-bold">Edit Artikel</h1>
+            <p class="text-muted mb-0 small">Perbarui data, konten, atau status artikel Anda.</p>
+        </div>
+        <div>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar
+            </a>
+        </div>
+    </div>
+
+    <form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" novalidate id="articleEditForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="Slug" />
+        <input type="hidden" asp-for="ExistingFeaturedImageUrl" />
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3 border-0 bg-danger-subtle text-danger" role="alert"></div>
+
+        <div class="row g-4">
+            <!-- Main Content Column -->
+            <div class="col-12 col-lg-8">
+                <div class="card border shadow-subtle p-4 mb-4">
+                    <!-- Title -->
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label fw-bold"></label>
+                        <input asp-for="Title" class="form-control form-control-lg" placeholder="Judul artikel..." />
+                        <div class="form-text small text-muted">Slug saat ini: <code>@Model.Slug</code> (otomatis disesuaikan jika judul diubah).</div>
+                        <span asp-validation-for="Title" class="text-danger small mt-1 d-block"></span>
+                    </div>
+
+                    <!-- Excerpt -->
+                    <div class="mb-3">
+                        <label asp-for="Excerpt" class="form-label fw-bold"></label>
+                        <textarea asp-for="Excerpt" class="form-control" rows="3" placeholder="Ringkasan singkat artikel..."></textarea>
+                        <div class="form-text small text-muted">Antara 20 hingga 300 karakter.</div>
+                        <span asp-validation-for="Excerpt" class="text-danger small mt-1 d-block"></span>
+                    </div>
+
+                    <!-- Content (Summernote) -->
+                    <div class="mb-3">
+                        <label asp-for="Content" class="form-label fw-bold"></label>
+                        <textarea asp-for="Content" id="summernote" class="form-control">@Model.Content</textarea>
+                        <span asp-validation-for="Content" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar / Metadata Column -->
+            <div class="col-12 col-lg-4">
+                <!-- Publication Card -->
+                <div class="card border shadow-subtle p-4 mb-4">
+                    <h5 class="fw-bold mb-3 fs-6 text-uppercase text-secondary">Pengaturan Publikasi</h5>
+
+                    <!-- Category -->
+                    <div class="mb-3">
+                        <label asp-for="CategoryId" class="form-label fw-bold"></label>
+                        <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select">
+                            <option value="">-- Pilih Kategori --</option>
+                        </select>
+                        <span asp-validation-for="CategoryId" class="text-danger small mt-1 d-block"></span>
+                    </div>
+
+                    <!-- Status Selection -->
+                    <div class="mb-3">
+                        <label asp-for="Status" class="form-label fw-bold"></label>
+                        <select asp-for="Status" class="form-select">
+                            <option value="@ArticleStatus.Draft">Draf (Tidak Ditampilkan di Publik)</option>
+                            <option value="@ArticleStatus.Published">Terbitkan (Ditampilkan di Publik)</option>
+                            <option value="@ArticleStatus.Archived">Arsipkan</option>
+                        </select>
+                    </div>
+
+                    <div class="d-grid gap-2 pt-2">
+                        <button type="submit" class="btn btn-primary py-2 fw-semibold">
+                            <i class="bi bi-check-lg me-1"></i> Simpan Perubahan
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Featured Image Card -->
+                <div class="card border shadow-subtle p-4">
+                    <h5 class="fw-bold mb-3 fs-6 text-uppercase text-secondary">Gambar Sampul</h5>
+
+                    @if (!string.IsNullOrEmpty(Model.ExistingFeaturedImageUrl))
+                    {
+                        <div class="mb-3" id="existingImageWrapper">
+                            <p class="small text-muted mb-1 fw-semibold">Gambar Saat Ini:</p>
+                            <img src="@Model.ExistingFeaturedImageUrl" alt="Sampul saat ini" class="img-fluid rounded border object-fit-cover w-100" style="aspect-ratio: 16/9;" />
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <label asp-for="NewFeaturedImage" class="form-label fw-semibold"></label>
+                        <input asp-for="NewFeaturedImage" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp" id="imageInput" />
+                        <div class="form-text small text-muted">Unggah file baru untuk mengganti gambar saat ini. Maks 5MB.</div>
+                        <span asp-validation-for="NewFeaturedImage" class="text-danger small mt-1 d-block"></span>
+                    </div>
+
+                    <div id="imagePreviewContainer" class="d-none">
+                        <p class="small text-muted mb-1 fw-semibold">Pratinjau Gambar Baru:</p>
+                        <img id="imagePreview" src="#" alt="Pratinjau Sampul Baru" class="img-fluid rounded border object-fit-cover w-100" style="aspect-ratio: 16/9;" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs5.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('#summernote').summernote({
+                placeholder: 'Tulis isi konten artikel di sini secara lengkap...',
+                tabsize: 2,
+                height: 380,
+                toolbar: [
+                    ['style', ['style']],
+                    ['font', ['bold', 'italic', 'underline', 'clear']],
+                    ['color', ['color']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['table', ['table']],
+                    ['insert', ['link', 'picture', 'hr']],
+                    ['view', ['fullscreen', 'codeview']]
+                ]
+            });
+
+            // Image preview for new image
+            $('#imageInput').on('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        $('#imagePreview').attr('src', event.target.result);
+                        $('#imagePreviewContainer').removeClass('d-none');
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    $('#imagePreviewContainer').addClass('d-none');
+                }
+            });
+        });
+    </script>
+}

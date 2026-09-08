@@ -1,0 +1,17 @@
+@model (string Title, string Message, string? ActionText, string? ActionUrl)
+
+<div class="card border shadow-subtle text-center py-5 my-4">
+    <div class="card-body">
+        <div class="avatar-circle mx-auto mb-3 bg-light text-muted border-0" style="width: 64px; height: 64px;">
+            <i class="bi bi-journal-x fs-2"></i>
+        </div>
+        <h4 class="fw-bold mb-2">@Model.Title</h4>
+        <p class="text-muted small mb-4 mx-auto" style="max-width: 450px;">@Model.Message</p>
+        @if (!string.IsNullOrEmpty(Model.ActionText) && !string.IsNullOrEmpty(Model.ActionUrl))
+        {
+            <a href="@Model.ActionUrl" class="btn btn-primary btn-sm px-4">
+                @Model.ActionText
+            </a>
+        }
+    </div>
+</div>

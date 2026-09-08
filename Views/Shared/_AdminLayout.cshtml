@@ -1,0 +1,193 @@
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+
+@{
+    var currentUser = await UserManager.GetUserAsync(User);
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+}
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Admin Panel NewsPortal</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <!-- Design System CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/components.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="admin-body">
+    <div class="admin-wrapper">
+        <!-- Sidebar Navigation -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <a asp-controller="Admin" asp-action="Index" class="sidebar-brand">
+                <i class="bi bi-shield-lock-fill text-primary fs-4"></i>
+                <span>Admin<span class="text-primary">Panel</span></span>
+            </a>
+
+            <ul class="sidebar-menu">
+                <li class="menu-header">Utama</li>
+                <li class="menu-item">
+                    <a asp-controller="Admin" asp-action="Index" class="menu-link @(currentController == "Admin" ? "active" : "")">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+
+                <li class="menu-header">Konten & Publikasi</li>
+                <li class="menu-item">
+                    <a asp-controller="AdminArticles" asp-action="Index" class="menu-link @(currentController == "AdminArticles" ? "active" : "")">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <span>Kelola Artikel</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a asp-controller="AdminCategories" asp-action="Index" class="menu-link @(currentController == "AdminCategories" ? "active" : "")">
+                        <i class="bi bi-tags"></i>
+                        <span>Kelola Kategori</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a asp-controller="AdminComments" asp-action="Index" class="menu-link @(currentController == "AdminComments" ? "active" : "")">
+                        <i class="bi bi-chat-dots"></i>
+                        <span>Moderasi Komentar</span>
+                    </a>
+                </li>
+
+                <li class="menu-header">Pengguna & Akses</li>
+                <li class="menu-item">
+                    <a asp-controller="AdminUsers" asp-action="Index" class="menu-link @(currentController == "AdminUsers" ? "active" : "")">
+                        <i class="bi bi-people"></i>
+                        <span>Kelola Pengguna</span>
+                    </a>
+                </li>
+
+                <li class="menu-header">Tautan Cepat</li>
+                <li class="menu-item">
+                    <a asp-controller="Home" asp-action="Index" class="menu-link">
+                        <i class="bi bi-globe"></i>
+                        <span>Lihat Website</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="p-3 border-top border-secondary border-opacity-25 mt-auto">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="avatar-circle-sm" style="width: 34px; height: 34px;">
+                        @(string.IsNullOrEmpty(currentUser?.DisplayName) ? "A" : currentUser.DisplayName.Substring(0, 1).ToUpper())
+                    </span>
+                    <div class="overflow-hidden flex-grow-1">
+                        <div class="text-white small fw-bold text-truncate">@currentUser?.DisplayName</div>
+                        <div class="text-muted text-truncate" style="font-size: 0.72rem;">@currentUser?.Email</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="admin-main">
+            <!-- Topbar -->
+            <header class="admin-topbar">
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm d-lg-none" id="sidebarToggleBtn">
+                        <i class="bi bi-list fs-5"></i>
+                    </button>
+                    <span class="fw-semibold text-dark">Portal Berita &middot; Area Administrasi</span>
+                </div>
+
+                <div class="d-flex align-items-center gap-3">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-sm d-none d-sm-inline-flex align-items-center gap-1">
+                        <i class="bi bi-box-arrow-up-right"></i>
+                        <span>Buka Website</span>
+                    </a>
+
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle d-flex align-items-center gap-2 border px-2 py-1" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="avatar-circle-sm" style="width: 28px; height: 28px; font-size: 0.75rem;">
+                                @(string.IsNullOrEmpty(currentUser?.DisplayName) ? "A" : currentUser.DisplayName.Substring(0, 1).ToUpper())
+                            </span>
+                            <span class="small fw-semibold text-truncate d-none d-md-inline" style="max-width: 120px;">
+                                @currentUser?.DisplayName
+                            </span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-elevated border-0 mt-2 p-2" style="min-width: 200px;">
+                            <li>
+                                <a class="dropdown-item rounded py-2 d-flex align-items-center gap-2" asp-controller="Account" asp-action="Profile">
+                                    <i class="bi bi-person text-secondary"></i> Profil Saya
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider my-2"></li>
+                            <li>
+                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline w-100">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="dropdown-item rounded py-2 d-flex align-items-center gap-2 text-danger">
+                                        <i class="bi bi-box-arrow-right"></i> Keluar
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Body -->
+            <main class="admin-content">
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show mb-4 shadow-subtle border-start border-4 border-success" role="alert">
+                        <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                        <div>@TempData["SuccessMessage"]</div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show mb-4 shadow-subtle border-start border-4 border-danger" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill text-danger fs-5"></i>
+                        <div>@TempData["ErrorMessage"]</div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                @if (TempData["InfoMessage"] != null)
+                {
+                    <div class="alert alert-info alert-dismissible fade show mb-4 shadow-subtle border-start border-4 border-info" role="alert">
+                        <i class="bi bi-info-circle-fill text-info fs-5"></i>
+                        <div>@TempData["InfoMessage"]</div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1080;" id="toastContainer"></div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        document.getElementById('sidebarToggleBtn')?.addEventListener('click', function () {
+            document.getElementById('adminSidebar')?.classList.toggle('show');
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

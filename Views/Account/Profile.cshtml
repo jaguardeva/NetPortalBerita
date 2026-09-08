@@ -1,0 +1,150 @@
+@model ProfileViewModel
+@{
+    ViewData["Title"] = "Profil Saya";
+    var changePasswordModel = new ChangePasswordViewModel();
+}
+
+<div class="py-4">
+    <!-- User Profile Header Card -->
+    <div class="card border-0 shadow-subtle mb-4" style="background-color: var(--color-surface);">
+        <div class="card-body p-4">
+            <div class="d-flex flex-column flex-md-row align-items-center align-items-md-start gap-4 text-center text-md-start">
+                <div class="avatar-circle flex-shrink-0" style="width: 84px; height: 84px; font-size: 2rem;">
+                    @(string.IsNullOrEmpty(Model.DisplayName) ? "U" : Model.DisplayName.Substring(0, 1).ToUpper())
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-start gap-2 mb-1">
+                        <h2 class="mb-0 fw-bold fs-3">@Model.DisplayName</h2>
+                        @foreach (var role in Model.Roles)
+                        {
+                            @if (role == "Admin")
+                            {
+                                <span class="badge badge-role badge-role-admin">Admin</span>
+                            }
+                            else if (role == "Author")
+                            {
+                                <span class="badge badge-role badge-role-author">Penulis</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-role badge-role-user">Pengguna</span>
+                            }
+                        }
+                        @if (Model.IsActive)
+                        {
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 small">
+                                <i class="bi bi-check-circle me-1"></i>Aktif
+                            </span>
+                        }
+                    </div>
+                    <p class="text-muted mb-2 small">
+                        <i class="bi bi-envelope me-1"></i> @Model.Email
+                    </p>
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-calendar3 me-1"></i> Bergabung sejak @Model.CreatedAt.ToString("dd MMMM yyyy", new System.Globalization.CultureInfo("id-ID"))
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="row g-3 mb-4">
+        @if (Model.Roles.Contains("Author") || Model.Roles.Contains("Admin"))
+        {
+            <div class="col-12 col-md-4">
+                <div class="stat-card">
+                    <div class="stat-value text-primary">@Model.ArticlesCount</div>
+                    <div class="stat-label">Artikel Ditulis</div>
+                </div>
+            </div>
+        }
+        <div class="col-12 @(Model.Roles.Contains("Author") || Model.Roles.Contains("Admin") ? "col-md-4" : "col-md-6")">
+            <div class="stat-card">
+                <div class="stat-value text-success">@Model.CommentsCount</div>
+                <div class="stat-label">Komentar Diberikan</div>
+            </div>
+        </div>
+        <div class="col-12 @(Model.Roles.Contains("Author") || Model.Roles.Contains("Admin") ? "col-md-4" : "col-md-6")">
+            <div class="stat-card">
+                <div class="stat-value text-danger">@Model.LikesCount</div>
+                <div class="stat-label">Artikel Disukai</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Edit & Password Change Cards -->
+    <div class="row g-4">
+        <!-- Edit Profile Form -->
+        <div class="col-12 col-lg-6">
+            <div class="card border h-100 shadow-subtle">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h3 class="card-title fs-5 mb-0 fw-semibold d-flex align-items-center gap-2">
+                        <i class="bi bi-pencil-square text-primary"></i> Perbarui Data Profil
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-controller="Account" asp-action="UpdateProfile" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" class="form-control bg-light" disabled readonly />
+                            <div class="form-text small text-muted">Email akun tidak dapat diubah.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="DisplayName" class="form-label"></label>
+                            <input asp-for="DisplayName" class="form-control" />
+                            <span asp-validation-for="DisplayName" class="text-danger small mt-1 d-block"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i> Simpan Perubahan
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change Password Form -->
+        <div class="col-12 col-lg-6">
+            <div class="card border h-100 shadow-subtle">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h3 class="card-title fs-5 mb-0 fw-semibold d-flex align-items-center gap-2">
+                        <i class="bi bi-shield-lock text-primary"></i> Ganti Kata Sandi
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-controller="Account" asp-action="ChangePassword" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label asp-for="@changePasswordModel.CurrentPassword" class="form-label"></label>
+                            <input name="CurrentPassword" type="password" class="form-control" placeholder="Kata sandi saat ini" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="@changePasswordModel.NewPassword" class="form-label"></label>
+                            <input name="NewPassword" type="password" class="form-control" placeholder="Minimal 8 karakter baru" required />
+                            <div class="form-text small text-muted">Harus ada huruf besar, huruf kecil, angka, dan karakter khusus.</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="@changePasswordModel.ConfirmPassword" class="form-label"></label>
+                            <input name="ConfirmPassword" type="password" class="form-control" placeholder="Ulangi kata sandi baru" required />
+                        </div>
+
+                        <button type="submit" class="btn btn-outline-primary">
+                            <i class="bi bi-key me-1"></i> Perbarui Kata Sandi
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

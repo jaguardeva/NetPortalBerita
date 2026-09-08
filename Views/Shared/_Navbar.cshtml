@@ -1,0 +1,152 @@
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject PortalBeritaApp.Data.ApplicationDbContext DbContext
+
+@{
+    ApplicationUser? currentUser = null;
+    if (SignInManager.IsSignedIn(User))
+    {
+        currentUser = await UserManager.GetUserAsync(User);
+    }
+
+    var navCategories = await DbContext.Categories
+        .OrderBy(c => c.Name)
+        .Take(5)
+        .ToListAsync();
+}
+
+<nav class="navbar navbar-expand-lg site-navbar sticky-top">
+    <div class="container">
+        <!-- Logo -->
+        <a class="navbar-brand me-3" asp-controller="Home" asp-action="Index">
+            <i class="bi bi-newspaper text-primary"></i>
+            <span>News<span class="text-dark">Portal</span></span>
+        </a>
+
+        <!-- Mobile Toggler -->
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-list fs-3"></i>
+        </button>
+
+        <div class="collapse navbar-collapse" id="mainNavbar">
+            <!-- Navigation Links -->
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Home" asp-action="Index">
+                        Beranda
+                    </a>
+                </li>
+                @foreach (var cat in navCategories)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Categories" asp-action="Detail" asp-route-slug="@cat.Slug">
+                            @cat.Name
+                        </a>
+                    </li>
+                }
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Articles" asp-action="Index">
+                        Semua Berita
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Search (Expandable) -->
+            <div class="navbar-search-wrap me-lg-2 my-2 my-lg-0">
+                <form id="navSearchForm" class="navbar-search-form" method="get" asp-controller="Search" asp-action="Index">
+                    <input id="navSearchInput" type="search" name="q" placeholder="Cari berita, topik, atau penulis..." autocomplete="off" aria-label="Cari berita" />
+                    <button type="submit" class="search-submit-btn" aria-label="Cari">
+                        <i class="bi bi-search"></i>
+                    </button>
+                    <button type="button" class="search-close-btn" id="navSearchClose" aria-label="Tutup pencarian">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </form>
+                <button type="button" class="search-trigger-btn" id="navSearchTrigger" aria-label="Buka pencarian">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+
+            <!-- Authentication Actions -->
+            <div class="d-flex align-items-center gap-2">
+                @if (SignInManager.IsSignedIn(User) && currentUser != null)
+                {
+                    <div class="dropdown">
+                        <button class="btn btn-outline-light text-dark dropdown-toggle d-flex align-items-center gap-2 border px-2 py-1" type="button" id="userMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="avatar-circle-sm">
+                                @(string.IsNullOrEmpty(currentUser.DisplayName) ? "U" : currentUser.DisplayName.Substring(0, 1).ToUpper())
+                            </span>
+                            <span class="fw-semibold text-truncate d-none d-sm-inline" style="max-width: 140px;">
+                                @currentUser.DisplayName
+                            </span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-elevated border-0 mt-2 p-2" aria-labelledby="userMenuButton" style="min-width: 220px;">
+                            <li class="px-3 py-2 border-bottom mb-2">
+                                <div class="fw-bold text-dark text-truncate">@currentUser.DisplayName</div>
+                                <div class="small text-muted text-truncate">@currentUser.Email</div>
+                                <div class="mt-1">
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <span class="badge badge-role badge-role-admin">Admin</span>
+                                    }
+                                    else if (User.IsInRole("Author"))
+                                    {
+                                        <span class="badge badge-role badge-role-author">Penulis</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-role badge-role-user">Pengguna</span>
+                                    }
+                                </div>
+                            </li>
+                            <li>
+                                <a class="dropdown-item rounded py-2 d-flex align-items-center gap-2" asp-controller="Account" asp-action="Profile">
+                                    <i class="bi bi-person text-secondary"></i> Profil Saya
+                                </a>
+                            </li>
+
+                            @if (User.IsInRole("Author") || User.IsInRole("Admin"))
+                            {
+                                <li>
+                                    <a class="dropdown-item rounded py-2 d-flex align-items-center gap-2" asp-controller="Author" asp-action="Index">
+                                        <i class="bi bi-pen text-primary"></i> Area Penulis
+                                    </a>
+                                </li>
+                            }
+
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li>
+                                    <a class="dropdown-item rounded py-2 d-flex align-items-center gap-2" href="/Admin">
+                                        <i class="bi bi-shield-check text-danger"></i> Admin Panel
+                                    </a>
+                                </li>
+                            }
+
+                            <li><hr class="dropdown-divider my-2"></li>
+                            <li>
+                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline w-100">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="dropdown-item rounded py-2 d-flex align-items-center gap-2 text-danger">
+                                        <i class="bi bi-box-arrow-right"></i> Keluar
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                }
+                else
+                {
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-outline-primary btn-sm px-3">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Masuk
+                    </a>
+                    <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-sm px-3">
+                        Daftar
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</nav>

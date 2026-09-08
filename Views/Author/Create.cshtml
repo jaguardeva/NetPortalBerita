@@ -1,0 +1,158 @@
+@model ArticleCreateViewModel
+@{
+    ViewData["Title"] = "Tulis Artikel Baru";
+}
+
+@section Styles {
+    <!-- Summernote Lite/BS5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs5.min.css" rel="stylesheet">
+    <style>
+        .note-editor.note-frame {
+            border-color: var(--color-border);
+            border-radius: 6px;
+        }
+        .note-toolbar {
+            background-color: var(--color-surface);
+            border-bottom-color: var(--color-border);
+        }
+    </style>
+}
+
+<div class="py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1 fw-bold">Tulis Artikel Baru</h1>
+            <p class="text-muted mb-0 small">Bagikan informasi, wawasan, atau laporan berita terkini.</p>
+        </div>
+        <div>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar
+            </a>
+        </div>
+    </div>
+
+    <form asp-action="Create" method="post" enctype="multipart/form-data" novalidate id="articleForm">
+        @Html.AntiForgeryToken()
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3 border-0 bg-danger-subtle text-danger" role="alert"></div>
+
+        <div class="row g-4">
+            <!-- Main Content Column -->
+            <div class="col-12 col-lg-8">
+                <div class="card border shadow-subtle p-4 mb-4">
+                    <!-- Title -->
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label fw-bold"></label>
+                        <input asp-for="Title" class="form-control form-control-lg" placeholder="Masukkan judul artikel yang menarik..." autofocus />
+                        <span asp-validation-for="Title" class="text-danger small mt-1 d-block"></span>
+                    </div>
+
+                    <!-- Excerpt -->
+                    <div class="mb-3">
+                        <label asp-for="Excerpt" class="form-label fw-bold"></label>
+                        <textarea asp-for="Excerpt" class="form-control" rows="3" placeholder="Ringkasan singkat artikel untuk ditampilkan di feed dan pratinjau kartu..."></textarea>
+                        <div class="form-text small text-muted">Antara 20 hingga 300 karakter.</div>
+                        <span asp-validation-for="Excerpt" class="text-danger small mt-1 d-block"></span>
+                    </div>
+
+                    <!-- Content (Summernote) -->
+                    <div class="mb-3">
+                        <label asp-for="Content" class="form-label fw-bold"></label>
+                        <textarea asp-for="Content" id="summernote" class="form-control"></textarea>
+                        <span asp-validation-for="Content" class="text-danger small mt-1 d-block"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar / Metadata Column -->
+            <div class="col-12 col-lg-4">
+                <!-- Publication Card -->
+                <div class="card border shadow-subtle p-4 mb-4">
+                    <h5 class="fw-bold mb-3 fs-6 text-uppercase text-secondary">Pengaturan Publikasi</h5>
+
+                    <!-- Category -->
+                    <div class="mb-3">
+                        <label asp-for="CategoryId" class="form-label fw-bold"></label>
+                        <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select">
+                            <option value="">-- Pilih Kategori --</option>
+                        </select>
+                        <span asp-validation-for="CategoryId" class="text-danger small mt-1 d-block"></span>
+                    </div>
+
+                    <!-- Hidden status input controlled by buttons -->
+                    <input type="hidden" asp-for="Status" id="articleStatusInput" value="@((int)Model.Status)" />
+
+                    <div class="d-grid gap-2 pt-2">
+                        <button type="button" class="btn btn-primary py-2 fw-semibold" onclick="submitWithStatus(@((int)ArticleStatus.Published))">
+                            <i class="bi bi-send-fill me-1"></i> Publikasikan Sekarang
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary py-2" onclick="submitWithStatus(@((int)ArticleStatus.Draft))">
+                            <i class="bi bi-save me-1"></i> Simpan sebagai Draf
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Featured Image Card -->
+                <div class="card border shadow-subtle p-4">
+                    <h5 class="fw-bold mb-3 fs-6 text-uppercase text-secondary">Gambar Sampul</h5>
+
+                    <div class="mb-3">
+                        <label asp-for="FeaturedImage" class="form-label fw-semibold"></label>
+                        <input asp-for="FeaturedImage" type="file" class="form-control" accept=".jpg,.jpeg,.png,.webp" id="imageInput" />
+                        <div class="form-text small text-muted">Format: JPG, PNG, WEBP. Maksimal 5MB.</div>
+                        <span asp-validation-for="FeaturedImage" class="text-danger small mt-1 d-block"></span>
+                    </div>
+
+                    <div id="imagePreviewContainer" class="d-none">
+                        <p class="small text-muted mb-1 fw-semibold">Pratinjau Gambar:</p>
+                        <img id="imagePreview" src="#" alt="Pratinjau Sampul" class="img-fluid rounded border object-fit-cover w-100" style="aspect-ratio: 16/9;" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-bs5.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('#summernote').summernote({
+                placeholder: 'Tulis isi konten artikel di sini secara lengkap...',
+                tabsize: 2,
+                height: 380,
+                toolbar: [
+                    ['style', ['style']],
+                    ['font', ['bold', 'italic', 'underline', 'clear']],
+                    ['color', ['color']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['table', ['table']],
+                    ['insert', ['link', 'picture', 'hr']],
+                    ['view', ['fullscreen', 'codeview']]
+                ]
+            });
+
+            // Image preview
+            $('#imageInput').on('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        $('#imagePreview').attr('src', event.target.result);
+                        $('#imagePreviewContainer').removeClass('d-none');
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    $('#imagePreviewContainer').addClass('d-none');
+                }
+            });
+        });
+
+        function submitWithStatus(status) {
+            $('#articleStatusInput').val(status);
+            $('#articleForm').submit();
+        }
+    </script>
+}

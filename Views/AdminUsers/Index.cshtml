@@ -1,0 +1,182 @@
+@model AdminUserListViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Kelola Pengguna";
+}
+
+<div class="mb-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Manajemen Pengguna</h1>
+            <p class="text-muted small mb-0">Kelola akun, tingkatkan peran menjadi Penulis, atau nonaktifkan akun yang melanggar.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Filters Bar -->
+<div class="card border shadow-subtle mb-4">
+    <div class="card-body p-3">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-12 col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" name="search" class="form-control border-start-0 ps-0" placeholder="Cari nama atau email pengguna..." value="@Model.SearchQuery" />
+                </div>
+            </div>
+            <div class="col-6 col-md-4">
+                <select name="role" class="form-select" onchange="this.form.submit()">
+                    <option value="">Semua Peran</option>
+                    @foreach (var r in Model.AllRoles)
+                    {
+                        <option value="@r" selected="@(string.Equals(Model.RoleFilter, r, StringComparison.OrdinalIgnoreCase))">@r</option>
+                    }
+                </select>
+            </div>
+            <div class="col-6 col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    Filter
+                </button>
+                @if (!string.IsNullOrEmpty(Model.SearchQuery) || !string.IsNullOrEmpty(Model.RoleFilter))
+                {
+                    <a asp-action="Index" class="btn btn-outline-secondary" title="Reset filter">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                }
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="card border shadow-subtle overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light small text-secondary text-uppercase">
+                <tr>
+                    <th>Pengguna</th>
+                    <th>Peran</th>
+                    <th>Status</th>
+                    <th>Bergabung</th>
+                    <th class="text-center">Aktivitas</th>
+                    <th class="text-end" style="min-width: 140px;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Users.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            Tidak ada data pengguna yang sesuai.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var u in Model.Users)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="avatar-circle-sm" style="width: 34px; height: 34px;">
+                                        @(string.IsNullOrEmpty(u.DisplayName) ? "U" : u.DisplayName.Substring(0, 1).ToUpper())
+                                    </span>
+                                    <div>
+                                        <div class="fw-bold text-dark">@u.DisplayName</div>
+                                        <div class="small text-muted">@u.Email</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                @if (u.CurrentRole == "Admin")
+                                {
+                                    <span class="badge badge-role badge-role-admin">Admin</span>
+                                }
+                                else if (u.CurrentRole == "Author")
+                                {
+                                    <span class="badge badge-role badge-role-author">Penulis</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-role badge-role-user">Pengguna</span>
+                                }
+                            </td>
+                            <td>
+                                @if (u.IsActive)
+                                {
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1" style="font-size: 0.72rem;">
+                                        <i class="bi bi-check-circle me-1"></i>Aktif
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1" style="font-size: 0.72rem;">
+                                        <i class="bi bi-x-circle me-1"></i>Non-aktif
+                                    </span>
+                                }
+                            </td>
+                            <td class="small text-muted">
+                                @u.CreatedAt.ToString("dd MMM yyyy", new System.Globalization.CultureInfo("id-ID"))
+                            </td>
+                            <td class="text-center small text-muted">
+                                <span class="me-2" title="Artikel Ditulis"><i class="bi bi-file-earmark-text text-primary"></i> @u.ArticlesCount</span>
+                                <span title="Komentar Dibuat"><i class="bi bi-chat text-info"></i> @u.CommentsCount</span>
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <!-- Change Role Button / Modal Trigger -->
+                                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#changeRoleModal-@u.Id" title="Ubah Peran">
+                                        <i class="bi bi-person-gear"></i> Peran
+                                    </button>
+
+                                    <!-- Toggle Active/Deactive -->
+                                    <form asp-action="ToggleStatus" asp-route-id="@u.Id" method="post" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin mengubah status akun @u.DisplayName?');">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn @(u.IsActive ? "btn-outline-warning" : "btn-outline-success")" title="@(u.IsActive ? "Nonaktifkan Akun" : "Aktifkan Akun")">
+                                            <i class="bi @(u.IsActive ? "bi-person-slash" : "bi-person-check")"></i>
+                                        </button>
+                                    </form>
+                                </div>
+
+                                <!-- Change Role Modal -->
+                                <div class="modal fade" id="changeRoleModal-@u.Id" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered text-start">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title fs-6 fw-bold">Ubah Peran Pengguna</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form asp-action="ChangeRole" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@u.Id" />
+                                                <div class="modal-body">
+                                                    <p class="mb-3 small">
+                                                        Ubah hak akses dan kewenangan untuk akun: <br />
+                                                        <strong>@u.DisplayName</strong> (@u.Email)
+                                                    </p>
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-bold small">Pilih Peran Baru:</label>
+                                                        <select name="newRole" class="form-select">
+                                                            <option value="User" selected="@(u.CurrentRole == "User")">User (Pengguna biasa, dapat like & komentar)</option>
+                                                            <option value="Author" selected="@(u.CurrentRole == "Author")">Author (Penulis, dapat membuat & mengelola artikel)</option>
+                                                            <option value="Admin" selected="@(u.CurrentRole == "Admin")">Admin (Administrator penuh sistem)</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
+                                                    <button type="submit" class="btn btn-primary btn-sm">Simpan Peran</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

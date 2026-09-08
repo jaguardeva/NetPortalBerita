@@ -1,0 +1,248 @@
+@model ArticleDetailViewModel
+@{
+    ViewData["Title"] = Model.Title;
+    var currentUrl = $"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}";
+}
+
+@section Styles {
+    <!-- SEO & Social Open Graph Meta -->
+    <meta name="description" content="@Model.Excerpt" />
+    <meta property="og:title" content="@Model.Title" />
+    <meta property="og:description" content="@Model.Excerpt" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="@currentUrl" />
+    @if (!string.IsNullOrEmpty(Model.FeaturedImageUrl))
+    {
+        <meta property="og:image" content="@(Model.FeaturedImageUrl.StartsWith("http") ? Model.FeaturedImageUrl : $"{Context.Request.Scheme}://{Context.Request.Host}{Model.FeaturedImageUrl}")" />
+    }
+    <link rel="canonical" href="@currentUrl" />
+}
+
+<article class="py-4 mx-auto" style="max-width: 840px;">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Beranda</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Categories" asp-action="Detail" asp-route-slug="@Model.CategorySlug">@Model.CategoryName</a></li>
+            <li class="breadcrumb-item active text-truncate" aria-current="page" style="max-width: 300px;">@Model.Title</li>
+        </ol>
+    </nav>
+
+    <!-- Article Header (DESIGN.md §20-21) -->
+    <header class="mb-4">
+        <div class="mb-2">
+            <a asp-controller="Categories" asp-action="Detail" asp-route-slug="@Model.CategorySlug" class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 text-decoration-none fw-semibold">
+                @Model.CategoryName
+            </a>
+        </div>
+
+        <h1 class="fw-bold mb-3" style="font-size: 2.35rem; line-height: 1.25; letter-spacing: -0.02em;">
+            @Model.Title
+        </h1>
+
+        <p class="lead text-secondary mb-4" style="font-size: 1.15rem; line-height: 1.6;">
+            @Model.Excerpt
+        </p>
+
+        <!-- Author & Date Meta Bar -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 py-3 border-top border-bottom text-muted small">
+            <div class="d-flex align-items-center gap-2">
+                <span class="avatar-circle-sm" style="width: 36px; height: 36px; font-size: 0.95rem;">
+                    @(string.IsNullOrEmpty(Model.AuthorName) ? "R" : Model.AuthorName.Substring(0, 1).ToUpper())
+                </span>
+                <div>
+                    <div class="fw-bold text-dark">@Model.AuthorName</div>
+                    <div style="font-size: 0.75rem;">
+                        @Model.PublishedAt.ToString("dd MMMM yyyy, HH:mm", new System.Globalization.CultureInfo("id-ID")) WIB
+                        @if (Model.UpdatedAt.HasValue)
+                        {
+                            <span class="ms-1 fst-italic">(Diperbarui: @Model.UpdatedAt.Value.ToString("dd/MM/yyyy"))</span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <span><i class="bi bi-clock me-1"></i>@Model.ReadingTimeMinutes menit baca</span>
+                <span>&bull;</span>
+                <span id="headerLikeCount"><i class="bi bi-heart-fill text-danger me-1"></i><span class="like-counter">@Model.LikesCount</span> suka</span>
+                <span>&bull;</span>
+                <span><i class="bi bi-chat-dots me-1"></i>@Model.CommentsCount komentar</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Featured Image -->
+    @if (!string.IsNullOrEmpty(Model.FeaturedImageUrl))
+    {
+        <div class="mb-4 rounded-3 overflow-hidden shadow-subtle" style="aspect-ratio: 16/9; background-color: var(--color-surface-dark);">
+            <img src="@Model.FeaturedImageUrl" alt="@Model.Title" class="w-100 h-100 object-fit-cover" />
+        </div>
+    }
+
+    <!-- Main Content Body (DESIGN.md §22) -->
+    <div class="article-content mb-5">
+        @Html.Raw(Model.Content)
+    </div>
+
+    <!-- Engagement & Social Share Bar -->
+    @Html.AntiForgeryToken()
+    <div class="p-4 bg-light rounded-3 border d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3 mb-5 shadow-subtle">
+        <!-- Like Action Button (Prepared for Phase 5 AJAX integration) -->
+        <div class="d-flex align-items-center gap-2">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <button type="button" class="btn @(Model.IsLikedByCurrentUser ? "btn-danger" : "btn-outline-danger") d-inline-flex align-items-center gap-2 px-3 py-2" id="btnLike" data-article-id="@Model.Id">
+                    <i class="bi @(Model.IsLikedByCurrentUser ? "bi-heart-fill" : "bi-heart")"></i>
+                    <span id="btnLikeText">@(Model.IsLikedByCurrentUser ? "Disukai" : "Suka Artikel")</span>
+                    <span class="badge bg-white text-danger border rounded-pill ms-1 like-counter">@Model.LikesCount</span>
+                </button>
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Login" asp-route-returnurl="@Context.Request.Path" class="btn btn-outline-danger d-inline-flex align-items-center gap-2 px-3 py-2" title="Masuk untuk menyukai">
+                    <i class="bi bi-heart"></i>
+                    <span>Suka Artikel</span>
+                    <span class="badge bg-danger text-white rounded-pill ms-1">@Model.LikesCount</span>
+                </a>
+            }
+        </div>
+
+        <!-- Social Share Buttons -->
+        <div class="d-flex align-items-center gap-2">
+            <span class="small text-muted fw-semibold">Bagikan:</span>
+            <a href="https://wa.me/?text=@Uri.EscapeDataString($"{Model.Title} {currentUrl}")" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-success rounded-circle p-2" title="Bagikan ke WhatsApp" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;">
+                <i class="bi bi-whatsapp"></i>
+            </a>
+            <a href="https://twitter.com/intent/tweet?text=@Uri.EscapeDataString(Model.Title)&url=@Uri.EscapeDataString(currentUrl)" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-dark rounded-circle p-2" title="Bagikan ke Twitter / X" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;">
+                <i class="bi bi-twitter-x"></i>
+            </a>
+            <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle p-2" onclick="copyArticleLink()" title="Salin Tautan" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;">
+                <i class="bi bi-link-45deg fs-5"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Author Profile Card -->
+    <div class="card border shadow-subtle mb-5">
+        <div class="card-body p-4 d-flex align-items-center gap-3">
+            <div class="avatar-circle flex-shrink-0" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                @(string.IsNullOrEmpty(Model.AuthorName) ? "R" : Model.AuthorName.Substring(0, 1).ToUpper())
+            </div>
+            <div>
+                <h5 class="fw-bold mb-1 fs-6">Ditulis oleh: @Model.AuthorName</h5>
+                <p class="text-muted small mb-0">Kontributor jurnalisme di NewsPortal yang berdedikasi menyajikan berita akurat, berimbang, dan tepercaya.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comments Section (PRD §26-28, DESIGN.md §24) -->
+    <section class="mb-5" id="commentsSection">
+        <div class="d-flex align-items-center justify-content-between mb-4 pb-2 border-bottom">
+            <h3 class="h4 mb-0 fw-bold d-flex align-items-center gap-2">
+                <i class="bi bi-chat-text text-primary"></i> Diskusi & Komentar
+                <span class="badge bg-secondary rounded-pill fs-6" id="commentTotalBadge">@Model.CommentsCount</span>
+            </h3>
+        </div>
+
+        <!-- Add Comment Form -->
+        <div class="card border shadow-subtle p-4 mb-4">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <form id="commentForm" method="post" asp-controller="Comments" asp-action="Create">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ArticleId" value="@Model.Id" />
+                    <input type="hidden" name="Slug" value="@Model.Slug" />
+
+                    <div class="mb-3">
+                        <label for="commentContent" class="form-label fw-semibold">Tulis Komentar Anda:</label>
+                        <textarea class="form-control" id="commentContent" name="Content" rows="3" placeholder="Sampaikan pendapat Anda secara santun dan konstruktif..." required maxlength="2000"></textarea>
+                        <div class="form-text small text-muted">Maksimal 2000 karakter.</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm px-4">
+                        <i class="bi bi-send me-1"></i> Kirim Komentar
+                    </button>
+                </form>
+            }
+            else
+            {
+                <div class="text-center py-3">
+                    <p class="text-muted small mb-3">Anda harus masuk terlebih dahulu untuk ikut berdiskusi dan memberikan komentar.</p>
+                    <a asp-controller="Account" asp-action="Login" asp-route-returnurl="@Context.Request.Path" class="btn btn-outline-primary btn-sm px-4">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Masuk Sekarang
+                    </a>
+                </div>
+            }
+        </div>
+
+        <!-- Comments List -->
+        <div id="commentsList">
+            @if (!Model.Comments.Any())
+            {
+                <div class="p-4 text-center text-muted bg-light rounded-3 border small" id="noCommentsMessage">
+                    Belum ada komentar pada artikel ini. Jadilah yang pertama berkomentar!
+                </div>
+            }
+            else
+            {
+                foreach (var comment in Model.Comments)
+                {
+                    <div class="card border shadow-subtle mb-3" id="comment-@comment.Id">
+                        <div class="card-body p-3">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="avatar-circle-sm" style="width: 30px; height: 30px; font-size: 0.8rem;">
+                                        @(string.IsNullOrEmpty(comment.UserDisplayName) ? "U" : comment.UserDisplayName.Substring(0, 1).ToUpper())
+                                    </span>
+                                    <div>
+                                        <div class="fw-bold small text-dark">@comment.UserDisplayName</div>
+                                        <div class="text-muted" style="font-size: 0.72rem;">@comment.CreatedAt.ToString("dd MMM yyyy, HH:mm", new System.Globalization.CultureInfo("id-ID")) WIB</div>
+                                    </div>
+                                </div>
+
+                                @if (comment.CanDelete)
+                                {
+                                    <form asp-controller="Comments" asp-action="Delete" asp-route-id="@comment.Id" asp-route-slug="@Model.Slug" method="post" class="d-inline delete-comment-form">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-link text-danger p-0 border-0 btn-delete-comment" title="Hapus Komentar" style="font-size: 0.85rem;">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                            <p class="mb-0 text-secondary small" style="white-space: pre-line;">@comment.Content</p>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </section>
+
+    <!-- Related Articles Section (DESIGN.md §25) -->
+    @if (Model.RelatedArticles.Any())
+    {
+        <section class="border-top pt-5">
+            <h3 class="h4 mb-4 fw-bold border-start border-4 border-primary ps-3">Artikel Terkait</h3>
+            <div class="row g-4">
+                @foreach (var related in Model.RelatedArticles)
+                {
+                    <div class="col-12 col-md-4">
+                        <partial name="_ArticleCard" model="related" />
+                    </div>
+                }
+            </div>
+        </section>
+    }
+</article>
+
+@section Scripts {
+    <script>
+        function copyArticleLink() {
+            navigator.clipboard.writeText(window.location.href).then(function() {
+                alert("Tautan artikel berhasil disalin ke clipboard!");
+            }).catch(function(err) {
+                console.error("Gagal menyalin link: ", err);
+            });
+        }
+    </script>
+}

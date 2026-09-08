@@ -1,0 +1,37 @@
+@model ArticleCardViewModel
+
+<div class="d-flex gap-3 align-items-start py-3 border-bottom article-list-item">
+    <div class="flex-shrink-0 rounded-2 overflow-hidden position-relative" style="width: 110px; height: 75px; background-color: var(--color-surface-dark);">
+        @if (!string.IsNullOrEmpty(Model.FeaturedImageUrl))
+        {
+            <a asp-controller="Articles" asp-action="Detail" asp-route-slug="@Model.Slug" class="d-block w-100 h-100">
+                <img src="@Model.FeaturedImageUrl" alt="@Model.Title" class="w-100 h-100 object-fit-cover transition-transform" loading="lazy" />
+            </a>
+        }
+        else
+        {
+            <a asp-controller="Articles" asp-action="Detail" asp-route-slug="@Model.Slug" class="d-flex w-100 h-100 align-items-center justify-content-center text-decoration-none text-muted">
+                <i class="bi bi-newspaper fs-4 opacity-50"></i>
+            </a>
+        }
+    </div>
+
+    <div class="flex-grow-1 min-w-0">
+        @if (!string.IsNullOrEmpty(Model.CategoryName))
+        {
+            <a asp-controller="Categories" asp-action="Detail" asp-route-slug="@Model.CategorySlug" class="badge bg-light text-primary text-decoration-none border mb-1" style="font-size: 0.7rem;">
+                @Model.CategoryName
+            </a>
+        }
+        <h6 class="fw-bold mb-1 line-clamp-2" style="font-size: 0.95rem; line-height: 1.35;">
+            <a asp-controller="Articles" asp-action="Detail" asp-route-slug="@Model.Slug" class="text-dark text-decoration-none text-hover-primary">
+                @Model.Title
+            </a>
+        </h6>
+        <div class="d-flex align-items-center gap-2 text-muted" style="font-size: 0.75rem;">
+            <span>@Model.PublishedAt.ToString("dd MMM yyyy", new System.Globalization.CultureInfo("id-ID"))</span>
+            <span>&bull;</span>
+            <span><i class="bi bi-clock me-1"></i>@Model.ReadingTimeMinutes mnt</span>
+        </div>
+    </div>
+</div>

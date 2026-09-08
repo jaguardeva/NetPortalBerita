@@ -1,0 +1,28 @@
+@{
+    ViewData["Title"] = "Akses Ditolak";
+}
+
+<div class="auth-wrapper">
+    <div class="auth-card text-center" style="max-width: 480px;">
+        <div class="mb-3">
+            <span class="avatar-circle mx-auto bg-danger-subtle text-danger border-danger-subtle" style="width: 64px; height: 64px; font-size: 1.75rem;">
+                <i class="bi bi-shield-x"></i>
+            </span>
+        </div>
+        <h1 class="auth-title text-danger">Akses Ditolak (403)</h1>
+        <p class="text-muted mb-4">
+            Maaf, Anda tidak memiliki izin atau peran yang diperlukan untuk mengakses halaman ini.
+        </p>
+        <div class="d-flex justify-content-center gap-2">
+            <a asp-controller="Home" asp-action="Index" class="btn btn-primary">
+                <i class="bi bi-house-door me-1"></i> Kembali ke Beranda
+            </a>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a asp-controller="Account" asp-action="Profile" class="btn btn-outline-secondary">
+                    <i class="bi bi-person me-1"></i> Profil Saya
+                </a>
+            }
+        </div>
+    </div>
+</div>

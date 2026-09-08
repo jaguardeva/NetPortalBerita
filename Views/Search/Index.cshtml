@@ -1,0 +1,83 @@
+@model SearchResultsViewModel
+@{
+    ViewData["Title"] = string.IsNullOrEmpty(Model.Query) ? "Pencarian Berita" : $"Hasil Pencarian '{Model.Query}'";
+}
+
+<div class="py-4">
+    <!-- Search Bar Box -->
+    <div class="card border-0 shadow-subtle mb-4" style="background-color: var(--color-surface);">
+        <div class="card-body p-4 p-md-5">
+            <h1 class="h2 fw-bold mb-3">Pencarian Berita</h1>
+            <form method="get" asp-controller="Search" asp-action="Index" class="row g-2">
+                <div class="col-12 col-md-9">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-white border-end-0 text-muted">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" name="q" class="form-control border-start-0 ps-0" placeholder="Ketik kata kunci berita, topik, atau peristiwa..." value="@Model.Query" autofocus />
+                    </div>
+                </div>
+                <div class="col-12 col-md-3">
+                    <button type="submit" class="btn btn-primary btn-lg w-100 fw-semibold">
+                        Cari Berita
+                    </button>
+                </div>
+            </form>
+
+            @if (!string.IsNullOrEmpty(Model.Query))
+            {
+                <div class="mt-3 text-muted small">
+                    Menampilkan <strong>@Model.TotalCount</strong> hasil pencarian untuk kata kunci <span class="text-dark fw-bold">"@Model.Query"</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    @if (string.IsNullOrEmpty(Model.Query))
+    {
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-search fs-1 opacity-50 mb-2 d-block"></i>
+            <p>Masukkan kata kunci di kolom atas untuk mulai mencari berita.</p>
+        </div>
+    }
+    else if (!Model.Articles.Any())
+    {
+        <partial name="_EmptyState" model='("Tidak Ada Hasil Ditemukan", $"Tidak ada artikel yang cocok dengan kata kunci \"{Model.Query}\". Coba periksa ejaan kata kunci atau gunakan istilah lain.", "Kembali ke Beranda", "/")' />
+    }
+    else
+    {
+        <div class="row g-4 mb-5">
+            @foreach (var article in Model.Articles)
+            {
+                <div class="col-12 col-md-6 col-lg-4">
+                    <partial name="_ArticleCard" model="article" />
+                </div>
+            }
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav aria-label="Navigasi pencarian" class="d-flex justify-content-center">
+                <ul class="pagination">
+                    <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                        <a class="page-link" asp-controller="Search" asp-action="Index" asp-route-q="@Model.Query" asp-route-page="@(Model.CurrentPage - 1)">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                            <a class="page-link" asp-controller="Search" asp-action="Index" asp-route-q="@Model.Query" asp-route-page="@i">@i</a>
+                        </li>
+                    }
+                    <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                        <a class="page-link" asp-controller="Search" asp-action="Index" asp-route-q="@Model.Query" asp-route-page="@(Model.CurrentPage + 1)">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    }
+</div>
